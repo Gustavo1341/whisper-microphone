@@ -1,0 +1,77 @@
+# Configuração principal do whisper-microfone
+# Edite este arquivo em %APPDATA%\whisper-microfone\config\config.toml
+
+[app]
+start_with_windows = false
+start_minimized = true
+language_ui = "pt-br"
+profile = "balanced"
+
+[model]
+name = ""
+compute_type = ""
+device = "auto"
+language = "auto"
+download_dir = ""
+
+[lifecycle]
+preload_on_startup = false
+unload_after_idle_seconds = 180
+load_during_recording = true
+warmup_on_load = true
+warmup_audio_seconds = 1.0
+
+[audio]
+sample_rate = 16000
+channels = 1
+device_name = ""
+device_index = -1
+min_duration_ms = 300
+max_duration_seconds = 60
+
+[vad]
+enabled = true
+threshold = 0.5
+min_silence_ms = 200
+speech_pad_ms = 100
+
+[transcription]
+beam_size = 1
+no_speech_threshold = 0.6
+condition_on_previous_text = false
+initial_prompt = ""
+suppress_blank = true
+temperature = 0.0
+
+[injection]
+strategy = "type_then_paste"
+type_delay_ms = 5
+paste_fallback_after_ms = 1500
+restore_clipboard = true
+restore_clipboard_delay_ms = 100
+trim_whitespace = true
+add_trailing_space = false
+capitalize_first = false
+sentence_end_punctuation = ""
+
+[ui]
+show_tray_icon = true
+play_sounds = true
+sound_volume = 0.3
+metrics_update_interval_ms = 500
+chart_history_seconds = 60
+window_width = 900
+window_height = 600
+remember_window_position = true
+
+[history]
+enabled = true
+store_text = true
+max_entries = 500
+auto_clean_after_days = 30
+
+[logging]
+level = "INFO"
+file_rotation_mb = 10
+file_retention = 5
+log_metrics = false

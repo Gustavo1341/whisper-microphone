@@ -1,0 +1,27 @@
+# Configuração de tema visual da interface
+# Edite este arquivo em %APPDATA%\whisper-microfone\config\theme.toml
+
+[colors]
+accent = "#007ACC"
+accent_hover = "#1A8CD8"
+recording = "#F44747"
+transcribing = "#FFCC02"
+ready_warm = "#89D185"
+ready_cold = "#4EC9B0"
+loading = "#569CD6"
+paused = "#858585"
+error = "#F44747"
+
+[fonts]
+family = "Segoe UI"
+size_base = 13
+size_small = 11
+size_large = 16
+monospace = "Consolas"
+
+[layout]
+sidebar_width = 200
+sidebar_icon_size = 20
+card_padding = 12
+card_radius = 6
+spacing = 8

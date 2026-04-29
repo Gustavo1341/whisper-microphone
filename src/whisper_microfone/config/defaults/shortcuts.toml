@@ -1,0 +1,18 @@
+# Atalhos de teclado globais
+# Edite este arquivo em %APPDATA%\whisper-microfone\config\shortcuts.toml
+
+[push_to_talk]
+combination = "ctrl+alt+space"
+enabled = true
+
+[toggle_pause]
+combination = "ctrl+alt+p"
+enabled = true
+
+[focus_window]
+combination = "ctrl+alt+w"
+enabled = true
+
+[quit_app]
+combination = "ctrl+q"
+enabled = true

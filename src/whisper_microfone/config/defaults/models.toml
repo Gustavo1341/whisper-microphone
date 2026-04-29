@@ -1,0 +1,105 @@
+# Catálogo de modelos e perfis de uso
+# Edite este arquivo em %APPDATA%\whisper-microfone\config\models.toml
+
+default_profile = "balanced"
+
+# ============================================================
+# Perfis de uso
+# ============================================================
+
+[profiles.economic]
+name = "small"
+compute_type = "int8_float16"
+device = "auto"
+unload_after_idle_seconds = 60
+preload_on_startup = false
+description_pt = "Uso esporádico — descarrega modelo rapidamente para liberar VRAM"
+description_en = "Sporadic use — unloads model quickly to free VRAM"
+
+[profiles.balanced]
+name = "small"
+compute_type = "int8_float16"
+device = "auto"
+unload_after_idle_seconds = 180
+preload_on_startup = false
+description_pt = "Perfil recomendado — equilíbrio entre latência e consumo de recursos"
+description_en = "Recommended profile — balance between latency and resource usage"
+
+[profiles.always_ready]
+name = "small"
+compute_type = "int8_float16"
+device = "auto"
+unload_after_idle_seconds = 0
+preload_on_startup = true
+description_pt = "Modelo sempre carregado — latência mínima, maior consumo de VRAM"
+description_en = "Model always loaded — minimal latency, higher VRAM usage"
+
+# ============================================================
+# Catálogo de modelos disponíveis
+# ============================================================
+
+[[available_models]]
+id = "tiny"
+display_name = "Tiny"
+repo_id = "Systran/faster-whisper-tiny"
+disk_mb = 75
+vram_mb = 500
+languages = []
+recommended = false
+description_pt = "Mais leve e rápido, mas baixa precisão em PT-BR"
+description_en = "Lightest and fastest, but low accuracy for PT-BR"
+
+[[available_models]]
+id = "base"
+display_name = "Base"
+repo_id = "Systran/faster-whisper-base"
+disk_mb = 145
+vram_mb = 700
+languages = []
+recommended = false
+description_pt = "Aceitável em inglês, fraco em português"
+description_en = "Acceptable for English, weak for Portuguese"
+
+[[available_models]]
+id = "small"
+display_name = "Small"
+repo_id = "Systran/faster-whisper-small"
+disk_mb = 480
+vram_mb = 1300
+languages = []
+recommended = true
+description_pt = "Sweet spot: bom PT-BR, ótimo EN, cabe em 6 GB de VRAM"
+description_en = "Sweet spot: good PT-BR, excellent EN, fits in 6 GB VRAM"
+
+[[available_models]]
+id = "medium"
+display_name = "Medium"
+repo_id = "Systran/faster-whisper-medium"
+disk_mb = 1500
+vram_mb = 2500
+languages = []
+recommended = false
+description_pt = "Excelente precisão, mas usa 2× mais VRAM que o small"
+description_en = "Excellent accuracy, but uses 2× more VRAM than small"
+
+[[available_models]]
+id = "large-v3-turbo"
+display_name = "Large v3 Turbo"
+repo_id = "deepdml/faster-whisper-large-v3-turbo-ct2"
+disk_mb = 1600
+vram_mb = 3000
+languages = []
+recommended = false
+description_pt = "Máxima precisão multilíngue, requer mais de 3 GB de VRAM livre"
+description_en = "Maximum multilingual accuracy, requires 3+ GB of free VRAM"
+
+[[available_models]]
+id = "distil-large-v3"
+display_name = "Distil Large v3 (EN only)"
+repo_id = "Systran/faster-distil-whisper-large-v3"
+disk_mb = 1500
+vram_mb = 1500
+languages = ["en"]
+recommended = false
+description_pt = "Rápido e preciso, mas apenas inglês"
+description_en = "Fast and accurate, but English only"
