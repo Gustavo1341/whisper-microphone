@@ -5,21 +5,10 @@
 start_with_windows = false
 start_minimized = true
 language_ui = "pt-br"
-profile = "balanced"
 
 [model]
-name = ""
-compute_type = ""
-device = "auto"
+groq_model = "whisper-large-v3-turbo"
 language = "auto"
-download_dir = ""
-
-[lifecycle]
-preload_on_startup = false
-unload_after_idle_seconds = 180
-load_during_recording = true
-warmup_on_load = true
-warmup_audio_seconds = 1.0
 
 [audio]
 sample_rate = 16000
@@ -36,16 +25,12 @@ min_silence_ms = 200
 speech_pad_ms = 100
 
 [transcription]
-beam_size = 1
-no_speech_threshold = 0.6
-condition_on_previous_text = false
-initial_prompt = ""
-suppress_blank = true
+initial_prompt = "Transcreva com pontuação correta, incluindo vírgulas, pontos, sinais de interrogação e exclamação."
 temperature = 0.0
 
 [injection]
 strategy = "type_then_paste"
-type_delay_ms = 5
+type_delay_ms = 20
 paste_fallback_after_ms = 1500
 restore_clipboard = true
 restore_clipboard_delay_ms = 100

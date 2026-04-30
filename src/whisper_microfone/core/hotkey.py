@@ -16,6 +16,10 @@ _MODIFIER_MAP: dict[str, Key] = {
     **{f"f{n}": getattr(Key, f"f{n}") for n in range(1, 13)},
 }
 
+# Mapa de letra minúscula → virtual key code do Windows
+_CHAR_TO_VK: dict[str, int] = {chr(i): i - 32 for i in range(ord("a"), ord("z") + 1)}
+_CHAR_TO_VK.update({str(i): ord(str(i)) for i in range(10)})
+
 
 def _parse_combination(combination: str) -> frozenset[Key | KeyCode]:
     keys: set[Key | KeyCode] = set()
@@ -30,6 +34,31 @@ def _parse_combination(combination: str) -> frozenset[Key | KeyCode]:
     return frozenset(keys)
 
 
+def _key_matches(pressed: Key | KeyCode, target: Key | KeyCode) -> bool:
+    """Verifica se pressed bate com target tolerando divergências de vk vs char."""
+    if pressed == target:
+        return True
+    if isinstance(pressed, KeyCode) and isinstance(target, KeyCode):
+        # Normaliza chars para minúsculo antes de comparar
+        pc = pressed.char.lower() if pressed.char else None
+        tc = target.char.lower() if target.char else None
+        if pc and tc and pc == tc:
+            return True
+        # Quando Alt/AltGr está pressionado no Windows, pynput pode reportar
+        # apenas vk sem char. Compara vk diretamente.
+        pvk = pressed.vk
+        tvk = target.vk
+        if pvk and tvk and pvk == tvk:
+            return True
+        # target foi criado via from_char → tem char mas não vk.
+        # pressed tem vk mas não char. Deriva o vk esperado do char do target.
+        if tc and pvk:
+            expected_vk = _CHAR_TO_VK.get(tc)
+            if expected_vk and pvk == expected_vk:
+                return True
+    return False
+
+
 class PushToTalkHotkey:
     def __init__(
         self,
@@ -40,7 +69,7 @@ class PushToTalkHotkey:
         self._on_press = on_press
         self._on_release = on_release
         self._target = _parse_combination(combination)
-        self._held: set[Key | KeyCode] = set()
+        self._held: list[Key | KeyCode] = []
         self._active = False
         self._lock = threading.Lock()
         self._listener: Listener | None = None
@@ -87,15 +116,30 @@ class PushToTalkHotkey:
         }
         if isinstance(key, Key):
             return _left_right.get(key, key)
+        if key.char is not None and len(key.char) == 1:
+            return KeyCode.from_char(key.char.lower())
         return key
+
+    def _all_target_matched(self) -> bool:
+        """Retorna True se cada tecla do target tem pelo menos uma correspondência em _held."""
+        for t in self._target:
+            if not any(_key_matches(h, t) for h in self._held):
+                return False
+        return True
+
+    def _held_matches(self, key: Key | KeyCode) -> bool:
+        """Retorna True se key bate com alguma tecla do target."""
+        return any(_key_matches(key, t) for t in self._target)
 
     def _handle_press(self, key: Key | KeyCode | None) -> None:
         if key is None:
             return
         normalized = self._normalize(key)
         with self._lock:
-            self._held.add(normalized)
-            if self._target.issubset(self._held) and not self._active:
+            # Evita duplicatas
+            if not any(_key_matches(normalized, h) for h in self._held):
+                self._held.append(normalized)
+            if self._all_target_matched() and not self._active:
                 self._active = True
                 fire = True
             else:
@@ -111,9 +155,8 @@ class PushToTalkHotkey:
             return
         normalized = self._normalize(key)
         with self._lock:
-            was_active = self._active
-            self._held.discard(normalized)
-            if normalized in self._target and self._active:
+            self._held = [h for h in self._held if not _key_matches(h, normalized)]
+            if self._held_matches(normalized) and self._active:
                 self._active = False
                 fire = True
             else:
@@ -127,12 +170,12 @@ class PushToTalkHotkey:
 
 if __name__ == "__main__":
     hotkey = PushToTalkHotkey(
-        "ctrl+alt+space",
-        on_press=lambda: print("PRESS"),
+        "ctrl+alt+shift+q",
+        on_press=lambda: print(">>> POPUP HOTKEY DETECTADO"),
         on_release=lambda: print("RELEASE"),
     )
     hotkey.start()
-    print("Pressione Ctrl+Alt+Space (5s para testar, depois encerra)")
-    time.sleep(0.1)
+    print("Pressione Ctrl+Alt+Shift+Q (aguardando 15s)...")
+    time.sleep(15)
     hotkey.stop()
-    print("OK — hotkey listener iniciou e parou sem erro")
+    print("Encerrado.")

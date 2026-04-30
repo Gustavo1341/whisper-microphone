@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -12,48 +12,18 @@ class AppConfig(BaseModel):
     start_with_windows: bool = Field(False, description="Iniciar automaticamente com o Windows")
     start_minimized: bool = Field(True, description="Iniciar minimizado na bandeja do sistema")
     language_ui: Literal["pt-br", "en"] = Field("pt-br", description="Idioma da interface (pt-br ou en)")
-    profile: str = Field("balanced", description="Perfil ativo (economic | balanced | always_ready ou nome de perfil customizado em models.toml)")
 
 
 # ---------------------------------------------------------------------------
 # ModelConfig
 # ---------------------------------------------------------------------------
 class ModelConfig(BaseModel):
-    name: str = Field("", description="Nome do modelo faster-whisper. Vazio = herda do perfil ativo em models.toml")
-    compute_type: Literal["", "int8", "int8_float16", "float16", "float32"] = Field(
-        "", description="Tipo de computação. Vazio = herda do perfil. Recomendado: int8_float16 (CUDA)"
-    )
-    device: Literal["auto", "cuda", "cpu"] = Field(
-        "auto", description="Dispositivo de inferência. 'auto' usa CUDA se disponível, senão CPU"
+    groq_model: str = Field(
+        "whisper-large-v3-turbo",
+        description="Modelo Groq Whisper. Opções: whisper-large-v3-turbo, whisper-large-v3, distil-whisper-large-v3-en",
     )
     language: str = Field(
         "auto", description="Idioma de transcrição. 'auto' = detecção automática. Exemplos: pt, en, es"
-    )
-    download_dir: str = Field(
-        "", description="Pasta para baixar modelos. Vazio = usa models_dir() padrão em %APPDATA%"
-    )
-
-
-# ---------------------------------------------------------------------------
-# LifecycleConfig
-# ---------------------------------------------------------------------------
-class LifecycleConfig(BaseModel):
-    preload_on_startup: bool = Field(
-        False, description="Carregar modelo ao iniciar o app (aumenta RAM/VRAM idle, elimina latência na 1ª transcrição)"
-    )
-    unload_after_idle_seconds: int = Field(
-        180,
-        ge=0,
-        description="Descarregar modelo após N segundos sem uso. 0 = nunca descarregar",
-    )
-    load_during_recording: bool = Field(
-        True, description="Iniciar carga do modelo em paralelo assim que o PTT é pressionado"
-    )
-    warmup_on_load: bool = Field(
-        True, description="Executar inferência de aquecimento com silêncio após carregar o modelo"
-    )
-    warmup_audio_seconds: float = Field(
-        1.0, gt=0, description="Duração do áudio de silêncio usado no aquecimento (segundos)"
     )
 
 
@@ -95,25 +65,9 @@ class VADConfig(BaseModel):
 # TranscriptionConfig
 # ---------------------------------------------------------------------------
 class TranscriptionConfig(BaseModel):
-    beam_size: int = Field(
-        1, ge=1, le=10, description="Tamanho do beam search. 1 = greedy (mais rápido). >1 = melhor qualidade, mais lento"
-    )
-    no_speech_threshold: float = Field(
-        0.6,
-        ge=0.0,
-        le=1.0,
-        description="Probabilidade mínima de 'sem fala' para descartar segmento. Evita alucinações em silêncio",
-    )
-    condition_on_previous_text: bool = Field(
-        False,
-        description="Usar texto anterior como contexto. False = mais seguro contra alucinações em loop",
-    )
     initial_prompt: str = Field(
         "",
-        description="Prompt inicial para Whisper. Útil para termos técnicos. Vazio = sem prompt. Ver prompts.toml para predefinidos",
-    )
-    suppress_blank: bool = Field(
-        True, description="Suprimir transcrições que resultam em espaço em branco"
+        description="Prompt inicial para o Whisper. Útil para termos técnicos. Vazio = sem prompt",
     )
     temperature: float = Field(
         0.0,
@@ -143,7 +97,7 @@ class InjectionConfig(BaseModel):
         True, description="Restaurar conteúdo anterior do clipboard após injeção via paste"
     )
     restore_clipboard_delay_ms: int = Field(
-        100, ge=0, description="Delay em ms antes de restaurar o clipboard (para garantir que o Ctrl+V foi processado)"
+        100, ge=0, description="Delay em ms antes de restaurar o clipboard"
     )
     trim_whitespace: bool = Field(
         True, description="Remover espaços em branco no início e fim do texto transcrito antes de injetar"
@@ -210,7 +164,7 @@ class LoggingConfig(BaseModel):
         5, ge=1, le=20, description="Número máximo de arquivos de log a manter"
     )
     log_metrics: bool = Field(
-        False, description="Logar métricas de RAM/VRAM/GPU/CPU no arquivo de log (verboso)"
+        False, description="Logar métricas de RAM/CPU no arquivo de log (verboso)"
     )
 
 
@@ -218,13 +172,11 @@ class LoggingConfig(BaseModel):
 # ThemeConfig
 # ---------------------------------------------------------------------------
 class ThemeColor(BaseModel):
-    accent: str = Field("#007ACC", description="Cor de destaque principal (hex). Padrão: azul VS Code")
+    accent: str = Field("#007ACC", description="Cor de destaque principal (hex)")
     accent_hover: str = Field("#1A8CD8", description="Cor de destaque ao passar o mouse (hex)")
     recording: str = Field("#F44747", description="Cor do indicador de gravação (hex)")
     transcribing: str = Field("#FFCC02", description="Cor do indicador de transcrição em andamento (hex)")
-    ready_warm: str = Field("#89D185", description="Cor do indicador de pronto com modelo quente (hex)")
-    ready_cold: str = Field("#4EC9B0", description="Cor do indicador de pronto com modelo frio (hex)")
-    loading: str = Field("#569CD6", description="Cor do indicador de carregamento (hex)")
+    ready: str = Field("#89D185", description="Cor do indicador de pronto (hex)")
     paused: str = Field("#858585", description="Cor do indicador de pausado (hex)")
     error: str = Field("#F44747", description="Cor do indicador de erro (hex)")
 
@@ -234,7 +186,7 @@ class ThemeFont(BaseModel):
     size_base: int = Field(13, ge=8, le=24, description="Tamanho base da fonte em pontos")
     size_small: int = Field(11, ge=6, le=20, description="Tamanho de fonte pequena em pontos")
     size_large: int = Field(16, ge=10, le=32, description="Tamanho de fonte grande em pontos")
-    monospace: str = Field("Consolas", description="Família de fonte monoespaçada (para logs e código)")
+    monospace: str = Field("Consolas", description="Família de fonte monoespaçada")
 
 
 class ThemeLayout(BaseModel):
@@ -246,9 +198,9 @@ class ThemeLayout(BaseModel):
 
 
 class ThemeConfig(BaseModel):
-    colors: ThemeColor = Field(default_factory=ThemeColor, description="Cores da interface")
-    fonts: ThemeFont = Field(default_factory=ThemeFont, description="Configurações de fontes")
-    layout: ThemeLayout = Field(default_factory=ThemeLayout, description="Dimensões e espaçamentos do layout")
+    colors: ThemeColor = Field(default_factory=ThemeColor)
+    fonts: ThemeFont = Field(default_factory=ThemeFont)
+    layout: ThemeLayout = Field(default_factory=ThemeLayout)
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +215,10 @@ class ShortcutsConfig(BaseModel):
     push_to_talk: KeyCombination = Field(
         default_factory=lambda: KeyCombination(combination="ctrl+alt+space"),
         description="Atalho push-to-talk (segurar para gravar)",
+    )
+    open_mic_popup: KeyCombination = Field(
+        default_factory=lambda: KeyCombination(combination="ctrl+f9"),
+        description="Abrir/fechar mini janela de microfone (clique para gravar)",
     )
     toggle_pause: KeyCombination = Field(
         default_factory=lambda: KeyCombination(combination="ctrl+alt+p"),
@@ -285,7 +241,7 @@ class UIStrings(BaseModel):
     model_config = {"extra": "allow"}
 
     app_title: str = "Whisper Microfone"
-    app_subtitle: str = "Ditado por voz local"
+    app_subtitle: str = "Ditado por voz via Groq"
     quit_confirm_title: str = "Sair"
     quit_confirm_message: str = "Tem certeza que deseja sair?"
     sidebar_home: str = "Início"
@@ -293,9 +249,7 @@ class UIStrings(BaseModel):
     sidebar_config: str = "Configurações"
     sidebar_history: str = "Histórico"
     sidebar_about: str = "Sobre"
-    status_idle_warm: str = "Pronto"
-    status_idle_cold: str = "Pronto (modelo descarregado)"
-    status_loading: str = "Carregando IA..."
+    status_idle: str = "Pronto"
     status_recording: str = "Ouvindo..."
     status_transcribing: str = "Processando..."
     status_paused: str = "Pausado"
@@ -316,41 +270,17 @@ class PromptsConfig(BaseModel):
 # ---------------------------------------------------------------------------
 # ModelsCatalog
 # ---------------------------------------------------------------------------
-class ModelProfile(BaseModel):
-    name: str = Field(description="Nome do modelo faster-whisper (ex: small, medium, large-v3-turbo)")
-    compute_type: Literal["int8", "int8_float16", "float16", "float32"] = Field(
-        "int8_float16", description="Tipo de computação para este perfil"
-    )
-    device: Literal["auto", "cuda", "cpu"] = Field("auto", description="Dispositivo para este perfil")
-    unload_after_idle_seconds: int = Field(
-        180, ge=0, description="Segundos de inatividade antes de descarregar. Sobrescreve lifecycle.toml para este perfil"
-    )
-    preload_on_startup: bool = Field(False, description="Pré-carregar ao iniciar para este perfil")
-    description_pt: str = Field("", description="Descrição do perfil em PT-BR (exibida na UI)")
-    description_en: str = Field("", description="Descrição do perfil em inglês (exibida na UI)")
-
-
-class ModelEntry(BaseModel):
-    id: str = Field(description="Identificador único do modelo (ex: small, medium, large-v3-turbo)")
+class GroqModelEntry(BaseModel):
+    id: str = Field(description="ID do modelo na API Groq (ex: whisper-large-v3-turbo)")
     display_name: str = Field(description="Nome amigável exibido na UI")
-    repo_id: str = Field(description="ID no HuggingFace Hub (ex: Systran/faster-whisper-small)")
-    disk_mb: int = Field(description="Tamanho aproximado em disco (MB)")
-    vram_mb: int = Field(description="VRAM aproximada em uso (MB) com compute_type padrão")
-    languages: list[str] = Field(default_factory=list, description="Idiomas suportados. Vazio = multilíngue")
     recommended: bool = Field(False, description="Marcar como recomendado na UI")
     description_pt: str = Field("", description="Descrição em PT-BR")
     description_en: str = Field("", description="Descrição em inglês")
 
 
 class ModelsCatalog(BaseModel):
-    default_profile: str = Field(
-        "balanced", description="Nome do perfil padrão (deve existir em profiles)"
-    )
-    profiles: dict[str, ModelProfile] = Field(
-        default_factory=dict, description="Perfis disponíveis (economic, balanced, always_ready, custom...)"
-    )
-    available_models: list[ModelEntry] = Field(
-        default_factory=list, description="Catálogo de modelos disponíveis para download e uso"
+    available_models: list[GroqModelEntry] = Field(
+        default_factory=list, description="Modelos Groq Whisper disponíveis"
     )
 
 
@@ -359,22 +289,10 @@ class ModelsCatalog(BaseModel):
 # ---------------------------------------------------------------------------
 class AdvancedConfig(BaseModel):
     worker_thread_priority: Literal["normal", "above_normal", "high"] = Field(
-        "normal", description="Prioridade das threads de worker (audio, transcription). 'high' pode afetar outras apps"
+        "normal", description="Prioridade das threads de worker (audio, transcription)"
     )
     audio_buffer_size: int = Field(
         4096, ge=512, le=65536, description="Tamanho do buffer de áudio em amostras (sounddevice blocksize)"
-    )
-    gpu_memory_fraction: float = Field(
-        0.0,
-        ge=0.0,
-        le=1.0,
-        description="Fração máxima de VRAM a usar (0.0 = sem limite). Útil para compartilhar GPU com jogos",
-    )
-    inter_op_threads: int = Field(
-        0, ge=0, description="Threads inter-op do CTranslate2. 0 = automático"
-    )
-    intra_op_threads: int = Field(
-        0, ge=0, description="Threads intra-op do CTranslate2. 0 = automático"
     )
     hotkey_poll_interval_ms: int = Field(
         10, ge=1, le=100, description="Intervalo de polling do listener de hotkey (ms)"
@@ -389,9 +307,6 @@ class AdvancedConfig(BaseModel):
         False,
         description="Modo portátil: armazena dados na pasta do executável em vez de %APPDATA%",
     )
-    crash_reporter: bool = Field(
-        True, description="Enviar relatório de crash anônimo para ajudar no diagnóstico (apenas logs locais, sem upload)"
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -402,7 +317,6 @@ class FullConfig(BaseModel):
 
     app: AppConfig = Field(default_factory=AppConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
-    lifecycle: LifecycleConfig = Field(default_factory=LifecycleConfig)
     audio: AudioConfig = Field(default_factory=AudioConfig)
     vad: VADConfig = Field(default_factory=VADConfig)
     transcription: TranscriptionConfig = Field(default_factory=TranscriptionConfig)

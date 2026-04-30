@@ -1,6 +1,20 @@
 from __future__ import annotations
 
+import os
 import sys
+from pathlib import Path
+
+
+def _load_dotenv() -> None:
+    env_file = Path(__file__).resolve().parents[2] / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip())
 
 from PySide6.QtWidgets import QApplication
 
@@ -15,15 +29,21 @@ from whisper_microfone.ui.pages.history import HistoryPage
 from whisper_microfone.ui.pages.home import HomePage
 from whisper_microfone.ui.pages.monitor import MonitorPage
 from whisper_microfone.ui.tray import SystemTray
+from PySide6.QtCore import QMetaObject, Qt
+
+from whisper_microfone.ui.mic_popup import MicPopup
+from whisper_microfone.core.hotkey import PushToTalkHotkey
 
 
 def main() -> None:
+    _load_dotenv()
     config = load_config()
-    setup_logging(config)
+    setup_logging(config.logging)
 
+    # QApplication deve existir antes de qualquer QObject (Engine, MainWindow)
     app = WhisperApp(config, sys.argv)
 
-    engine = Engine(config)
+    engine = Engine(config)  # QObject — requer QApplication já criada
 
     window = MainWindow(engine, config)
 
@@ -40,6 +60,20 @@ def main() -> None:
     tray = SystemTray(engine, window, config)
     tray.show()
 
+    mic_popup = MicPopup(engine)
+
+    def _toggle_popup_safe() -> None:
+        print(">>> POPUP HOTKEY DETECTADO", flush=True)
+        # Cruza da thread pynput → UI thread
+        QMetaObject.invokeMethod(mic_popup, "toggle", Qt.ConnectionType.QueuedConnection)
+
+    popup_hotkey = PushToTalkHotkey(
+        config.shortcuts.open_mic_popup.combination,
+        on_press=_toggle_popup_safe,
+        on_release=lambda: None,
+    )
+    popup_hotkey.start()
+
     # Inicia janela conforme configuração
     if config.app.start_minimized:
         window.hide()
@@ -51,6 +85,7 @@ def main() -> None:
     exit_code = app.exec()
 
     engine.stop()
+    popup_hotkey.stop()
     sys.exit(exit_code)
 
 
