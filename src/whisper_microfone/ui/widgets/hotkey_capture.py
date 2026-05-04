@@ -14,11 +14,11 @@ from PySide6.QtWidgets import (
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
-_COLOR_BG = "#FFFFFF"
-_COLOR_BADGE_BG = "#F5F5F7"
-_COLOR_BADGE_TEXT = "#1D1D1F"
-_COLOR_BADGE_BORDER = "rgba(0,0,0,0.10)"
-_COLOR_CAPTURE_TEXT = "#6E6E73"
+_COLOR_BG = "#181a20"
+_COLOR_BADGE_BG = "#1c1e25"
+_COLOR_BADGE_TEXT = "rgba(255,255,255,0.90)"
+_COLOR_BADGE_BORDER = "rgba(255,255,255,0.10)"
+_COLOR_CAPTURE_TEXT = "rgba(255,255,255,0.48)"
 _COLOR_BTN_TEXT = "#0071E3"
 
 _FONT_BADGE = 12
@@ -115,7 +115,7 @@ class _Badge(QFrame):
         label = QLabel(text)
         label.setStyleSheet(
             f"color: {_COLOR_BADGE_TEXT}; font-size: {_FONT_BADGE}px; font-weight: 500;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
             " background: transparent; border: none;"
         )
         layout.addWidget(label)
@@ -157,7 +157,7 @@ class HotkeyCapture(QWidget):
         self._btn.setStyleSheet(
             f"color: {_COLOR_BTN_TEXT}; font-size: {_FONT_BTN}px; font-weight: 500;"
             " background: transparent; border: none; padding: 0;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
         )
         self._btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -179,7 +179,8 @@ class HotkeyCapture(QWidget):
             label = QLabel("Pressione a combinação...")
             label.setStyleSheet(
                 f"color: {_COLOR_CAPTURE_TEXT}; font-size: {_FONT_BADGE}px; font-style: italic;"
-                " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+                " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
+                " background: transparent;"
             )
             self._badges_area.addWidget(label)
             self._badges_area.addStretch()
@@ -193,6 +194,7 @@ class HotkeyCapture(QWidget):
                 label = QLabel("Nenhum atalho definido")
                 label.setStyleSheet(
                     f"color: {_COLOR_CAPTURE_TEXT}; font-size: {_FONT_BADGE}px;"
+                    " background: transparent;"
                 )
                 self._badges_area.addWidget(label)
             self._badges_area.addStretch()

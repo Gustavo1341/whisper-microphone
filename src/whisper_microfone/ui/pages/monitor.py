@@ -13,12 +13,12 @@ from whisper_microfone.config.schemas import FullConfig
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
-BG_PRIMARY     = "#FFFFFF"
-BG_SECONDARY   = "#F5F5F7"
-TEXT_PRIMARY   = "#1D1D1F"
-TEXT_SECONDARY = "#6E6E73"
+BG_PRIMARY     = "#181a20"
+BG_SECONDARY   = "#111318"
+TEXT_PRIMARY   = "rgba(255,255,255,0.90)"
+TEXT_SECONDARY = "rgba(255,255,255,0.48)"
 ACCENT         = "#0071E3"
-BORDER         = "rgba(0,0,0,0.08)"
+BORDER         = "rgba(255,255,255,0.08)"
 
 
 # ---------------------------------------------------------------------------
@@ -30,9 +30,9 @@ def _make_card(title: str = "") -> tuple[QFrame, QVBoxLayout]:
     card.setObjectName("card")
     card.setStyleSheet("""
         QFrame#card {
-            background: #FFFFFF;
+            background: #181a20;
             border-radius: 12px;
-            border: 1px solid rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
         }
     """)
     layout = QVBoxLayout(card)
@@ -42,6 +42,7 @@ def _make_card(title: str = "") -> tuple[QFrame, QVBoxLayout]:
         lbl = QLabel(title.upper())
         lbl.setStyleSheet(
             f"font-size: 11px; color: {TEXT_SECONDARY}; letter-spacing: 0.5px;"
+            " background: transparent;"
         )
         layout.addWidget(lbl)
     return card, layout
@@ -81,7 +82,7 @@ class LiveChart(QWidget):
         w = self.width()
         h = self.height()
 
-        painter.fillRect(0, 0, w, h, QColor(BG_SECONDARY))
+        painter.fillRect(0, 0, w, h, QColor("#111318"))
 
         if len(self._points) < 2:
             painter.end()
@@ -122,11 +123,11 @@ class _StatItem(QWidget):
         font.setPointSize(22)
         font.setBold(True)
         self._value_lbl.setFont(font)
-        self._value_lbl.setStyleSheet(f"color: {ACCENT};")
+        self._value_lbl.setStyleSheet(f"color: {ACCENT}; background: transparent;")
 
         self._label_lbl = QLabel(label)
         self._label_lbl.setStyleSheet(
-            f"font-size: 11px; color: {TEXT_SECONDARY};"
+            f"font-size: 11px; color: {TEXT_SECONDARY}; background: transparent;"
         )
 
         layout.addWidget(self._value_lbl)
@@ -161,12 +162,13 @@ class _MetricRow(QWidget):
         self._title_lbl = QLabel(title)
         self._title_lbl.setStyleSheet(
             f"font-size: 12px; color: {TEXT_PRIMARY}; font-weight: 500;"
+            " background: transparent;"
         )
         self._title_lbl.setFixedWidth(60)
 
         self._val_lbl = QLabel("—")
         self._val_lbl.setStyleSheet(
-            f"font-size: 11px; color: {TEXT_SECONDARY};"
+            f"font-size: 11px; color: {TEXT_SECONDARY}; background: transparent;"
         )
 
         left.addWidget(self._title_lbl)
@@ -212,10 +214,10 @@ class MonitorPage(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(f"background: {BG_SECONDARY};")
+        scroll.setStyleSheet("background: #111318; border: none;")
 
         container = QWidget()
-        container.setStyleSheet(f"background: {BG_SECONDARY};")
+        container.setStyleSheet("background: #111318;")
         self._content = QVBoxLayout(container)
         self._content.setContentsMargins(32, 32, 32, 32)
         self._content.setSpacing(16)

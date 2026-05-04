@@ -7,17 +7,14 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLay
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
-_COLOR_BG = "#FFFFFF"
-_COLOR_TEXT_PRIMARY = "#1D1D1F"
-_COLOR_TEXT_SECONDARY = "#6E6E73"
-_COLOR_BORDER = "rgba(0,0,0,0.08)"
+_COLOR_BG = "#181a20"
+_COLOR_TEXT_PRIMARY = "rgba(255,255,255,0.90)"
+_COLOR_TEXT_SECONDARY = "rgba(255,255,255,0.48)"
 
 _COLOR_RECORDING = "#FF3B30"
 _COLOR_TRANSCRIBING = "#FF9500"
-_COLOR_READY_WARM = "#34C759"
-_COLOR_LOADING = "#0071E3"
+_COLOR_READY = "#34C759"
 _COLOR_PAUSED = "#6E6E73"
-_COLOR_READY_COLD = "#6E6E73"
 _COLOR_ERROR = "#FF3B30"
 
 _DOT_SIZE = 12
@@ -25,24 +22,19 @@ _FONT_STATE = 20
 _FONT_SUB = 12
 
 _STATE_MAP: dict[str, tuple[str, str, str]] = {
-    # state -> (dot_color, state_text, sub_text)
-    "recording":    (_COLOR_RECORDING,    "Ouvindo...",              "Segure para gravar"),
-    "idle_warm":    (_COLOR_READY_WARM,   "Pronto",                  "Modelo carregado"),
-    "transcribing": (_COLOR_TRANSCRIBING, "Processando...",          "Transcrevendo áudio"),
-    "loading":      (_COLOR_LOADING,      "Carregando IA...",        "Aguarde"),
-    "paused":       (_COLOR_PAUSED,       "Pausado",                 "PTT desativado"),
-    "idle_cold":    (_COLOR_READY_COLD,   "Pronto",                  "Modelo descarregado"),
-    "error":        (_COLOR_ERROR,        "Erro",                    "Verifique os logs"),
+    "recording":    (_COLOR_RECORDING,    "Ouvindo...",     "Segure para gravar"),
+    "idle":         (_COLOR_READY,        "Pronto",         "Aguardando PTT"),
+    "transcribing": (_COLOR_TRANSCRIBING, "Processando...", "Transcrevendo via Groq"),
+    "paused":       (_COLOR_PAUSED,       "Pausado",        "PTT desativado"),
+    "error":        (_COLOR_ERROR,        "Erro",           "Verifique os logs"),
 }
-_STATE_FALLBACK = (_COLOR_READY_COLD, "Pronto", "")
+_STATE_FALLBACK = (_COLOR_READY, "Pronto", "")
 
 
 class _DotIndicator(QWidget):
-    """Círculo colorido de 12 px desenhado com QPainter."""
-
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._color = QColor(_COLOR_READY_COLD)
+        self._color = QColor(_COLOR_READY)
         self.setFixedSize(_DOT_SIZE, _DOT_SIZE)
 
     def set_color(self, hex_color: str) -> None:
@@ -64,16 +56,16 @@ class StatusCard(QFrame):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._build_ui()
-        self.set_state("idle_cold")
+        self.set_state("idle")
 
     def _build_ui(self) -> None:
         self.setObjectName("StatusCard")
         self.setStyleSheet(
             """
             QFrame#StatusCard {
-                background-color: #FFFFFF;
+                background-color: #181a20;
                 border-radius: 12px;
-                border: 1px solid rgba(0, 0, 0, 0.08);
+                border: 1px solid rgba(255,255,255,0.08);
             }
             """
         )
@@ -83,7 +75,6 @@ class StatusCard(QFrame):
         outer.setContentsMargins(20, 18, 20, 18)
         outer.setSpacing(4)
 
-        # Linha superior: dot + estado
         top_row = QHBoxLayout()
         top_row.setSpacing(10)
         top_row.setContentsMargins(0, 0, 0, 0)
@@ -94,31 +85,23 @@ class StatusCard(QFrame):
         self._state_label = QLabel()
         self._state_label.setStyleSheet(
             f"color: {_COLOR_TEXT_PRIMARY}; font-size: {_FONT_STATE}px; font-weight: 600;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
+            " background: transparent;"
         )
         top_row.addWidget(self._state_label, 1, Qt.AlignmentFlag.AlignVCenter)
 
         outer.addLayout(top_row)
 
-        # Subtexto
         self._sub_label = QLabel()
         self._sub_label.setStyleSheet(
             f"color: {_COLOR_TEXT_SECONDARY}; font-size: {_FONT_SUB}px;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
+            " background: transparent;"
         )
-        self._sub_label.setIndent(_DOT_SIZE + 10)  # alinha com o texto do estado
+        self._sub_label.setIndent(_DOT_SIZE + 10)
         outer.addWidget(self._sub_label)
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
     def set_state(self, state: str) -> None:
-        """Atualiza o card para refletir o estado informado.
-
-        States reconhecidos: recording, idle_warm, transcribing, loading,
-        paused, idle_cold, error. Qualquer outro cai no fallback cinza.
-        """
         dot_color, state_text, sub_text = _STATE_MAP.get(state, _STATE_FALLBACK)
         self._dot.set_color(dot_color)
         self._state_label.setText(state_text)

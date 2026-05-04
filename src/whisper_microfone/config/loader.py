@@ -21,10 +21,8 @@ _ENV_PREFIX = "WHISPER_MIC_"
 
 # Chaves que vêm no topo de advanced.toml (sem seção própria)
 _ADVANCED_KEYS = frozenset({
-    "worker_thread_priority", "audio_buffer_size", "gpu_memory_fraction",
-    "inter_op_threads", "intra_op_threads", "hotkey_poll_interval_ms",
+    "worker_thread_priority", "audio_buffer_size", "hotkey_poll_interval_ms",
     "clipboard_timeout_ms", "sqlite_journal_mode", "portable_mode",
-    "crash_reporter",
 })
 
 
@@ -61,7 +59,7 @@ def _build_normalized(
     """
     out: dict[str, Any] = {}
 
-    # config.toml — seções diretas (app, model, lifecycle, audio, vad,
+    # config.toml — seções diretas (app, model, audio, vad,
     #               transcription, injection, ui, history, logging)
     out.update(config)
 
@@ -192,18 +190,16 @@ def save_section(section_name: str, data: dict[str, Any]) -> None:
     file_map = {
         # config.toml
         "app": "config.toml", "model": "config.toml",
-        "lifecycle": "config.toml", "audio": "config.toml",
-        "vad": "config.toml", "transcription": "config.toml",
-        "injection": "config.toml", "ui": "config.toml",
-        "history": "config.toml", "logging": "config.toml",
+        "audio": "config.toml", "vad": "config.toml",
+        "transcription": "config.toml", "injection": "config.toml",
+        "ui": "config.toml", "history": "config.toml", "logging": "config.toml",
         # theme.toml
         "colors": "theme.toml", "fonts": "theme.toml", "layout": "theme.toml",
         # shortcuts.toml
         "push_to_talk": "shortcuts.toml", "toggle_pause": "shortcuts.toml",
         "focus_window": "shortcuts.toml", "quit_app": "shortcuts.toml",
         # models.toml
-        "profiles": "models.toml", "available_models": "models.toml",
-        "default_profile": "models.toml",
+        "available_models": "models.toml",
         # advanced.toml (seção inteira)
         "advanced": "advanced.toml",
     }

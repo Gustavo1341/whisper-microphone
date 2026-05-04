@@ -27,8 +27,8 @@ class AudioRecorder:
         self._config = config
         self._chunks: deque[np.ndarray] = deque()
         self._stream: sd.InputStream | None = None
-        # Lock protege _chunks contra race entre callback e stop()
         self._lock = threading.Lock()
+        self.on_volume: object = None   # callable(rms: float) | None
 
     # ------------------------------------------------------------------
     # Resolução de dispositivo
@@ -79,15 +79,24 @@ class AudioRecorder:
         status: sd.CallbackFlags,
     ) -> None:
         if status:
-            # Overflow de input é esperado em máquinas lentas; não é fatal
             logger.warning("sounddevice status no callback: {}", status)
+        chunk = indata.copy()
         with self._lock:
-            # Cópia necessária: indata é buffer reutilizado pelo sounddevice
-            self._chunks.append(indata.copy())
+            self._chunks.append(chunk)
+        if self.on_volume is not None:
+            rms = float(np.sqrt(np.mean(chunk ** 2)))
+            try:
+                self.on_volume(rms)
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # API pública
     # ------------------------------------------------------------------
+
+    @property
+    def is_recording(self) -> bool:
+        return self._stream is not None
 
     def start(self) -> None:
         """Abre o InputStream e começa a acumular chunks de áudio.
@@ -161,15 +170,6 @@ class AudioRecorder:
                 min_ms,
             )
             return None
-
-        max_samples = self._config.max_duration_seconds * self._config.sample_rate
-        if len(audio) > max_samples:
-            logger.debug(
-                "Áudio cortado em {}s (capturado {:.1f}s)",
-                self._config.max_duration_seconds,
-                len(audio) / self._config.sample_rate,
-            )
-            audio = audio[:max_samples]
 
         logger.debug(
             "Gravação finalizada — {:.2f}s / {} amostras",

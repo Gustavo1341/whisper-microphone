@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from whisper_microfone.assets.icon import make_app_icon
 from whisper_microfone.config.schemas import FullConfig
 from whisper_microfone.engine import Engine
 from whisper_microfone.ui.theme import AppTheme
@@ -62,11 +63,11 @@ class _StatusDot(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setFixedSize(self._DOT_SIZE, self._DOT_SIZE)
-        self._color = AppTheme.READY_COLD
+        self._color = AppTheme.READY
         self._refresh_style()
 
     def set_state(self, state: str) -> None:
-        self._color = AppTheme.STATE_COLOR.get(state, AppTheme.READY_COLD)
+        self._color = AppTheme.STATE_COLOR.get(state, AppTheme.READY)
         self._refresh_style()
 
     def _refresh_style(self) -> None:
@@ -107,32 +108,33 @@ class _NavButton(QPushButton):
     def _apply_style(self) -> None:
         if self._selected:
             self.setStyleSheet(
-                f"QPushButton {{"
-                f"  background-color: {AppTheme.ACCENT};"
-                f"  color: #FFFFFF;"
-                f"  border: none;"
-                f"  border-radius: 8px;"
+                "QPushButton {"
+                "  background-color: rgba(255,255,255,0.08);"
+                "  color: rgba(255,255,255,0.90);"
+                "  border: none;"
+                "  border-radius: 8px;"
                 f"  padding: 0 12px;"
                 f"  font-size: {AppTheme.FONT_SIZE_BASE}px;"
-                f"  font-weight: 500;"
-                f"  text-align: left;"
-                f"}}"
+                "  font-weight: 500;"
+                "  text-align: left;"
+                "}"
             )
         else:
             self.setStyleSheet(
-                f"QPushButton {{"
-                f"  background-color: transparent;"
-                f"  color: {AppTheme.TEXT_PRIMARY};"
-                f"  border: none;"
-                f"  border-radius: 8px;"
+                "QPushButton {"
+                "  background-color: transparent;"
+                "  color: rgba(255,255,255,0.48);"
+                "  border: none;"
+                "  border-radius: 8px;"
                 f"  padding: 0 12px;"
                 f"  font-size: {AppTheme.FONT_SIZE_BASE}px;"
-                f"  font-weight: 400;"
-                f"  text-align: left;"
-                f"}}"
-                f"QPushButton:hover {{"
-                f"  background-color: {AppTheme.BG_TERTIARY};"
-                f"}}"
+                "  font-weight: 400;"
+                "  text-align: left;"
+                "}"
+                "QPushButton:hover {"
+                "  background-color: rgba(255,255,255,0.06);"
+                "  color: rgba(255,255,255,0.90);"
+                "}"
             )
 
 
@@ -142,7 +144,6 @@ class _NavButton(QPushButton):
 
 _NAV_ITEMS: list[tuple[str, str]] = [
     ("⊙", "Início"),
-    ("◈", "Monitor"),
     ("⊛", "Configurações"),
     ("≡", "Histórico"),
     ("◉", "Sobre"),
@@ -150,7 +151,7 @@ _NAV_ITEMS: list[tuple[str, str]] = [
 
 
 class _Sidebar(QFrame):
-    """Painel lateral de navegação — largura fixa, fundo #F5F5F7."""
+    """Painel lateral de navegação — largura fixa, fundo dark #0d0e11."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -173,13 +174,13 @@ class _Sidebar(QFrame):
         # Título do app
         title = QLabel("Whisper Mic")
         title_font = QFont()
-        title_font.setPixelSize(16)
+        title_font.setPixelSize(15)
         title_font.setBold(True)
         title.setFont(title_font)
         title.setStyleSheet(
-            f"color: {AppTheme.TEXT_PRIMARY};"
-            f"padding: 24px 20px 8px 20px;"
-            f"background: transparent;"
+            "color: rgba(255,255,255,0.90);"
+            "padding: 24px 20px 8px 20px;"
+            "background: transparent;"
         )
         root.addWidget(title)
 
@@ -211,9 +212,9 @@ class _Sidebar(QFrame):
         self._dot = _StatusDot()
         self._status_label = QLabel("Pronto")
         self._status_label.setStyleSheet(
-            f"color: {AppTheme.TEXT_SECONDARY};"
-            f"font-size: {AppTheme.FONT_SIZE_SMALL}px;"
-            f"background: transparent;"
+            "color: rgba(255,255,255,0.35);"
+            f"font-size: 11px;"
+            "background: transparent;"
         )
 
         footer_layout.addWidget(self._dot, 0, Qt.AlignmentFlag.AlignVCenter)
@@ -233,13 +234,11 @@ class _Sidebar(QFrame):
         """Atualiza o dot de status e o label de estado."""
         self._dot.set_state(state)
         label_map: dict[str, str] = {
-            "idle_warm": "Pronto",
-            "idle_cold": "Pronto (frio)",
-            "loading": "Carregando...",
-            "recording": "Ouvindo...",
+            "idle":         "Pronto",
+            "recording":    "Ouvindo...",
             "transcribing": "Processando...",
-            "paused": "Pausado",
-            "error": "Erro",
+            "paused":       "Pausado",
+            "error":        "Erro",
         }
         self._status_label.setText(label_map.get(state, state))
 
@@ -274,6 +273,7 @@ class MainWindow(QMainWindow):
         self._config = config
 
         self.setWindowTitle("Whisper Microfone")
+        self.setWindowIcon(make_app_icon())
         self.resize(config.ui.window_width, config.ui.window_height)
         self.setMinimumSize(QSize(640, 400))
 
@@ -291,7 +291,7 @@ class MainWindow(QMainWindow):
         # Widget central que contém sidebar + conteúdo
         central = QWidget()
         self.setCentralWidget(central)
-        central.setStyleSheet(f"background-color: {AppTheme.BG_PRIMARY};")
+        central.setStyleSheet(f"background-color: {AppTheme.BG_PRIMARY}; border: none;")
 
         root_layout = QHBoxLayout(central)
         root_layout.setContentsMargins(0, 0, 0, 0)
@@ -303,19 +303,17 @@ class MainWindow(QMainWindow):
 
         # Área de conteúdo (stack de páginas)
         self._pages = QStackedWidget()
-        self._pages.setStyleSheet(f"background-color: {AppTheme.BG_PRIMARY};")
+        self._pages.setStyleSheet(f"background-color: {AppTheme.BG_SECONDARY};")
         root_layout.addWidget(self._pages, 1)
 
         # Páginas placeholder (substituídas incrementalmente)
         self._page_home = _make_placeholder_page("Início")
-        self._page_monitor = _make_placeholder_page("Monitor")
         self._page_config = _make_placeholder_page("Configurações")
         self._page_history = _make_placeholder_page("Histórico")
         self._page_about = _make_placeholder_page("Sobre")
 
         for page in (
             self._page_home,
-            self._page_monitor,
             self._page_config,
             self._page_history,
             self._page_about,
@@ -358,7 +356,6 @@ class MainWindow(QMainWindow):
         # Atualiza referência no atributo correspondente
         _attrs = [
             "_page_home",
-            "_page_monitor",
             "_page_config",
             "_page_history",
             "_page_about",

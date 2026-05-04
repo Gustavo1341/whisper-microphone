@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pyperclip
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QWidget, QFrame, QVBoxLayout, QHBoxLayout,
@@ -19,20 +20,21 @@ from whisper_microfone.config.schemas import FullConfig
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
-BG_PRIMARY     = "#FFFFFF"
-BG_SECONDARY   = "#F5F5F7"
-TEXT_PRIMARY   = "#1D1D1F"
-TEXT_SECONDARY = "#6E6E73"
+BG_PRIMARY     = "#181a20"
+BG_SECONDARY   = "#111318"
+TEXT_PRIMARY   = "rgba(255,255,255,0.90)"
+TEXT_SECONDARY = "rgba(255,255,255,0.48)"
 ACCENT         = "#0071E3"
 RECORDING      = "#FF3B30"
-BORDER         = "rgba(0,0,0,0.08)"
+BORDER         = "rgba(255,255,255,0.08)"
 
-_COLUMNS = ["Hora", "Idioma", "Texto", "Duração", "Latência"]
+_COLUMNS = ["Hora", "Idioma", "Texto", "Duração", "Latência", ""]
 _COL_TIMESTAMP = 0
 _COL_LANGUAGE  = 1
 _COL_TEXT      = 2
 _COL_DURATION  = 3
 _COL_LATENCY   = 4
+_COL_COPY      = 5
 
 
 # ---------------------------------------------------------------------------
@@ -58,7 +60,7 @@ class HistoryPage(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(32, 32, 32, 32)
         outer.setSpacing(16)
-        self.setStyleSheet(f"background: {BG_SECONDARY};")
+        self.setStyleSheet("background: #111318;")
 
         # --- Barra superior: busca + botões ---
         top_row = QHBoxLayout()
@@ -74,7 +76,7 @@ class HistoryPage(QWidget):
                 padding: 0 12px;
                 font-size: 13px;
                 color: {TEXT_PRIMARY};
-                background: {BG_PRIMARY};
+                background: #181a20;
             }}
         """)
         self._search.textChanged.connect(self._on_search)
@@ -128,16 +130,16 @@ class HistoryPage(QWidget):
 
         self._table.setStyleSheet(f"""
             QTableWidget {{
-                background: {BG_PRIMARY};
+                background: #181a20;
                 border-radius: 12px;
                 border: 1px solid {BORDER};
                 font-size: 13px;
                 color: {TEXT_PRIMARY};
-                alternate-background-color: {BG_SECONDARY};
+                alternate-background-color: #1c1e25;
                 gridline-color: transparent;
             }}
             QHeaderView::section {{
-                background: {BG_PRIMARY};
+                background: #181a20;
                 color: {TEXT_SECONDARY};
                 font-size: 11px;
                 font-weight: 500;
@@ -151,8 +153,8 @@ class HistoryPage(QWidget):
                 border: none;
             }}
             QTableWidget::item:selected {{
-                background: #E8F0FD;
-                color: {TEXT_PRIMARY};
+                background: rgba(0,113,227,0.25);
+                color: rgba(255,255,255,0.90);
             }}
         """)
 
@@ -162,6 +164,8 @@ class HistoryPage(QWidget):
         header.setSectionResizeMode(_COL_TEXT,      QHeaderView.Stretch)
         header.setSectionResizeMode(_COL_DURATION,  QHeaderView.ResizeToContents)
         header.setSectionResizeMode(_COL_LATENCY,   QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(_COL_COPY,      QHeaderView.Fixed)
+        self._table.setColumnWidth(_COL_COPY, 72)
 
         self._table.setRowHeight(0, 40)
         self._table.verticalHeader().setDefaultSectionSize(36)
@@ -222,6 +226,32 @@ class HistoryPage(QWidget):
             item = QTableWidgetItem(value)
             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
             self._table.setItem(row, col, item)
+
+        # Botão copiar
+        text_to_copy = entry.get("text", "")
+        btn = QPushButton("Copiar")
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setFixedHeight(26)
+        btn.setStyleSheet(f"""
+            QPushButton {{
+                border: 1px solid {BORDER};
+                border-radius: 6px;
+                background: #1c1e25;
+                font-size: 11px;
+                color: {TEXT_SECONDARY};
+                padding: 0 8px;
+            }}
+            QPushButton:hover {{
+                background: rgba(0,113,227,0.15);
+                color: {ACCENT};
+                border-color: {ACCENT};
+            }}
+            QPushButton:pressed {{
+                background: rgba(0,113,227,0.25);
+            }}
+        """)
+        btn.clicked.connect(lambda _checked, t=text_to_copy: pyperclip.copy(t))
+        self._table.setCellWidget(row, _COL_COPY, btn)
 
     # ------------------------------------------------------------------
     # Search

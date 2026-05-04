@@ -7,9 +7,9 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QWidget
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
-_COLOR_LABEL = "#6E6E73"
-_COLOR_VALUE = "#1D1D1F"
-_COLOR_TRACK = "#E8E8ED"
+_COLOR_LABEL = "rgba(255,255,255,0.48)"
+_COLOR_VALUE = "rgba(255,255,255,0.90)"
+_COLOR_TRACK = "#2a2d35"  # equivalente dark de rgba(255,255,255,0.08) sobre #111318
 _COLOR_FILL_DEFAULT = "#0071E3"
 _FONT_LABEL = 11
 _FONT_VALUE = 13

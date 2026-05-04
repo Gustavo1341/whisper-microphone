@@ -66,12 +66,11 @@ class SileroVAD:
         self._config = config
         self._model: object | None = None
 
-        if _SILERO_AVAILABLE and config.enabled:
-            self._model = _load_model_safe()
-            logger.info("Silero VAD carregado (JIT, CPU).")
-        elif not _SILERO_AVAILABLE:
+        # Carregamento lazy — o modelo JIT é pesado e trava o __init__.
+        # Será carregado na primeira chamada a trim_silence().
+        if not _SILERO_AVAILABLE:
             logger.warning("SileroVAD instanciado sem biblioteca disponível. Operando em modo passthrough.")
-        else:
+        elif not config.enabled:
             logger.info("VAD desabilitado por configuração (config.vad.enabled=False).")
 
     # ------------------------------------------------------------------
@@ -84,8 +83,11 @@ class SileroVAD:
         Retorna array vazio ``(0,)`` se nenhum segmento de fala for detectado.
         Retorna *audio* original se o VAD não estiver disponível ou desabilitado.
         """
-        if not _SILERO_AVAILABLE or self._model is None:
+        if not _SILERO_AVAILABLE or not self._config.enabled:
             return audio
+        if self._model is None:
+            self._model = _load_model_safe()
+            logger.info("Silero VAD carregado (JIT, CPU).")
 
         if audio.size == 0:
             return audio

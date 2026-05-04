@@ -5,6 +5,10 @@
 combination = "ctrl+alt+space"
 enabled = true
 
+[open_mic_popup]
+combination = "ctrl+f9"
+enabled = true
+
 [toggle_pause]
 combination = "ctrl+alt+p"
 enabled = true

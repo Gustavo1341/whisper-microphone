@@ -27,7 +27,6 @@ from whisper_microfone.ui.pages.about import AboutPage
 from whisper_microfone.ui.pages.config_page import ConfigPage
 from whisper_microfone.ui.pages.history import HistoryPage
 from whisper_microfone.ui.pages.home import HomePage
-from whisper_microfone.ui.pages.monitor import MonitorPage
 from whisper_microfone.ui.tray import SystemTray
 from PySide6.QtCore import QMetaObject, Qt
 
@@ -49,10 +48,9 @@ def main() -> None:
 
     # Injecta páginas reais nos placeholders
     window.replace_page(0, HomePage(engine, config))
-    window.replace_page(1, MonitorPage(engine, config))
-    window.replace_page(2, ConfigPage(engine, config))
-    window.replace_page(3, HistoryPage(engine, config))
-    window.replace_page(4, AboutPage(engine, config))
+    window.replace_page(1, ConfigPage(engine, config))
+    window.replace_page(2, HistoryPage(engine, config))
+    window.replace_page(3, AboutPage(engine, config))
 
     # Garante que a página inicial (Início) está selecionada após injeção
     window.navigate_to(0)

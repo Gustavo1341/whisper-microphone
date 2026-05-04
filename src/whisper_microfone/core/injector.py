@@ -67,12 +67,18 @@ class TextInjector:
             pyperclip.copy(previous)
 
     def _type(self, text: str) -> None:
+        # Usa `keyboard` (SendInput) para suporte correto a Unicode/acentos no Windows.
+        # Fallback para pynput se a lib não estiver disponível.
         delay = self.config.type_delay_ms / 1000
-        keyboard = Controller()
-        for char in text:
-            keyboard.type(char)
-            if delay > 0:
-                time.sleep(delay)
+        try:
+            import keyboard as kb
+            kb.write(text, delay=delay)
+        except Exception:
+            ctrl = Controller()
+            for char in text:
+                ctrl.type(char)
+                if delay > 0:
+                    time.sleep(delay)
 
     def _type_with_timeout(self, text: str) -> None:
         timeout = self.config.paste_fallback_after_ms / 1000
@@ -95,17 +101,3 @@ class TextInjector:
 
         if exc_holder:
             raise exc_holder[0]
-
-
-if __name__ == "__main__":
-    injector = TextInjector(InjectionConfig())
-    result = injector._post_process("  olá mundo  ")
-    print(repr(result))
-
-    injector_cap = TextInjector(InjectionConfig(capitalize_first=True))
-    result_cap = injector_cap._post_process("hello")
-    print(repr(result_cap))
-
-    injector_punct = TextInjector(InjectionConfig(sentence_end_punctuation="."))
-    result_punct = injector_punct._post_process("ok")
-    print(repr(result_punct))

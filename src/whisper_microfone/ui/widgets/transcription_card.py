@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import pyperclip
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
+    QHBoxLayout,
     QLabel,
+    QPushButton,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -12,11 +15,11 @@ from PySide6.QtWidgets import (
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
-_COLOR_BG = "#FFFFFF"
-_COLOR_TITLE = "#6E6E73"
-_COLOR_TEXT = "#1D1D1F"
-_COLOR_EMPTY = "#6E6E73"
-_COLOR_FOOTER = "#6E6E73"
+_COLOR_BG = "#181a20"
+_COLOR_TITLE = "rgba(255,255,255,0.48)"
+_COLOR_TEXT = "rgba(255,255,255,0.90)"
+_COLOR_EMPTY = "rgba(255,255,255,0.35)"
+_COLOR_FOOTER = "rgba(255,255,255,0.48)"
 
 _FONT_TITLE = 11
 _FONT_TEXT = 14
@@ -38,9 +41,9 @@ class TranscriptionCard(QFrame):
         self.setStyleSheet(
             """
             QFrame#TranscriptionCard {
-                background-color: #FFFFFF;
+                background-color: #181a20;
                 border-radius: 12px;
-                border: 1px solid rgba(0, 0, 0, 0.08);
+                border: 1px solid rgba(255,255,255,0.08);
             }
             """
         )
@@ -50,14 +53,40 @@ class TranscriptionCard(QFrame):
         layout.setContentsMargins(20, 16, 20, 16)
         layout.setSpacing(8)
 
-        # Título
+        # Cabeçalho: título + botão copiar
+        header = QHBoxLayout()
+        header.setContentsMargins(0, 0, 0, 0)
         self._title_label = QLabel("ÚLTIMA TRANSCRIÇÃO")
         self._title_label.setStyleSheet(
             f"color: {_COLOR_TITLE}; font-size: {_FONT_TITLE}px; font-weight: 500;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
-            " letter-spacing: 0.5px;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
+            " letter-spacing: 0.5px; background: transparent;"
         )
-        layout.addWidget(self._title_label)
+        self._btn_copy = QPushButton("Copiar")
+        self._btn_copy.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_copy.setFixedHeight(24)
+        self._btn_copy.setStyleSheet("""
+            QPushButton {
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 6px;
+                background: rgba(255,255,255,0.05);
+                font-size: 11px;
+                color: rgba(255,255,255,0.48);
+                padding: 0 10px;
+            }
+            QPushButton:hover {
+                background: rgba(0,113,227,0.15);
+                color: #0071E3;
+                border-color: #0071E3;
+            }
+        """)
+        self._btn_copy.setVisible(False)
+        self._btn_copy.clicked.connect(self._on_copy)
+        self._last_text = ""
+        header.addWidget(self._title_label)
+        header.addStretch()
+        header.addWidget(self._btn_copy)
+        layout.addLayout(header)
 
         # Texto da transcrição
         self._text_label = QLabel()
@@ -70,7 +99,8 @@ class TranscriptionCard(QFrame):
         self._footer_label = QLabel()
         self._footer_label.setStyleSheet(
             f"color: {_COLOR_FOOTER}; font-size: {_FONT_FOOTER}px;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
+            " background: transparent;"
         )
         self._footer_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self._footer_label)
@@ -79,7 +109,8 @@ class TranscriptionCard(QFrame):
         self._text_label.setText("Nenhuma transcrição ainda")
         self._text_label.setStyleSheet(
             f"color: {_COLOR_EMPTY}; font-size: {_FONT_TEXT}px; font-style: italic;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
+            " background: transparent;"
         )
         self._footer_label.setText("")
 
@@ -108,10 +139,13 @@ class TranscriptionCard(QFrame):
         else:
             display_text = text
 
+        self._last_text = text
+        self._btn_copy.setVisible(True)
         self._text_label.setText(display_text)
         self._text_label.setStyleSheet(
             f"color: {_COLOR_TEXT}; font-size: {_FONT_TEXT}px;"
-            " font-family: 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif;"
+            " font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;"
+            " background: transparent;"
         )
 
         # Rodapé
@@ -129,3 +163,7 @@ class TranscriptionCard(QFrame):
             parts.append(f"{duration_ms / 1000:.1f}s áudio")
 
         self._footer_label.setText("  ·  ".join(parts))
+
+    def _on_copy(self) -> None:
+        if self._last_text:
+            pyperclip.copy(self._last_text)

@@ -13,7 +13,7 @@ _MODIFIER_MAP: dict[str, Key] = {
     "alt": Key.alt_l,
     "shift": Key.shift,
     "space": Key.space,
-    **{f"f{n}": getattr(Key, f"f{n}") for n in range(1, 13)},
+    **{f"f{n}": getattr(Key, f"f{n}") for n in range(1, 25)},
 }
 
 # Mapa de letra minúscula → virtual key code do Windows

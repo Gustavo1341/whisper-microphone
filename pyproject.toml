@@ -1,16 +1,16 @@
 [build-system]
-requires = ["setuptools>=72", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "whisper-microfone"
 version = "0.1.0"
-description = "Ditado por voz local com Whisper — substituto open source do Win+H"
+description = "Ditado por voz via Groq Whisper API — substituto open source do Win+H"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 authors = [{ name = "Gustavo Brandão", email = "gustavo.brandao@mutualpay.co" }]
-keywords = ["whisper", "speech-to-text", "dictation", "voice", "transcription"]
+keywords = ["whisper", "groq", "speech-to-text", "dictation", "voice", "transcription"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: End Users/Desktop",

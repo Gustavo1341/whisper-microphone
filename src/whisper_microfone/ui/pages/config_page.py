@@ -4,39 +4,39 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QWidget, QFrame, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QScrollArea, QComboBox,
-    QCheckBox, QSpinBox, QSizePolicy,
+    QCheckBox, QSpinBox,
 )
 
 from whisper_microfone.engine import Engine
-from whisper_microfone.config.schemas import (
-    FullConfig, ModelConfig, LifecycleConfig,
-    AudioConfig, InjectionConfig,
-)
+from whisper_microfone.config.schemas import FullConfig
 
 # ---------------------------------------------------------------------------
 # Design tokens
 # ---------------------------------------------------------------------------
-BG_PRIMARY     = "#FFFFFF"
-BG_SECONDARY   = "#F5F5F7"
-TEXT_PRIMARY   = "#1D1D1F"
-TEXT_SECONDARY = "#6E6E73"
+BG_PRIMARY     = "#181a20"
+BG_SECONDARY   = "#111318"
+TEXT_PRIMARY   = "rgba(255,255,255,0.90)"
+TEXT_SECONDARY = "rgba(255,255,255,0.48)"
 ACCENT         = "#0071E3"
-BORDER         = "rgba(0,0,0,0.08)"
+BORDER         = "rgba(255,255,255,0.08)"
 
-_STRATEGY_LABELS = [
-    "Digitar → Colar",
-    "Só colar",
-    "Só digitar",
+_GROQ_MODEL_LABELS = [
+    "whisper-large-v3-turbo ★ recomendado",
+    "whisper-large-v3",
+    "distil-whisper-large-v3-en",
 ]
-_STRATEGY_VALUES = [
-    "type_then_paste",
-    "paste_only",
-    "type_only",
+_GROQ_MODEL_VALUES = [
+    "whisper-large-v3-turbo",
+    "whisper-large-v3",
+    "distil-whisper-large-v3-en",
 ]
+
+_STRATEGY_LABELS = ["Digitar → Colar", "Só colar", "Só digitar"]
+_STRATEGY_VALUES = ["type_then_paste", "paste_only", "type_only"]
 
 
 # ---------------------------------------------------------------------------
-# Helper
+# Helpers
 # ---------------------------------------------------------------------------
 
 def _make_card(title: str = "") -> tuple[QFrame, QVBoxLayout]:
@@ -44,9 +44,9 @@ def _make_card(title: str = "") -> tuple[QFrame, QVBoxLayout]:
     card.setObjectName("card")
     card.setStyleSheet("""
         QFrame#card {
-            background: #FFFFFF;
+            background: #181a20;
             border-radius: 12px;
-            border: 1px solid rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
         }
     """)
     layout = QVBoxLayout(card)
@@ -56,17 +56,19 @@ def _make_card(title: str = "") -> tuple[QFrame, QVBoxLayout]:
         lbl = QLabel(title.upper())
         lbl.setStyleSheet(
             f"font-size: 11px; color: {TEXT_SECONDARY}; letter-spacing: 0.5px;"
+            " background: transparent;"
         )
         layout.addWidget(lbl)
     return card, layout
 
 
 def _field_row(label: str, widget: QWidget) -> QHBoxLayout:
-    """Label à esquerda + widget à direita, alinhados."""
     row = QHBoxLayout()
     row.setSpacing(12)
     lbl = QLabel(label)
-    lbl.setStyleSheet(f"font-size: 13px; color: {TEXT_PRIMARY};")
+    lbl.setStyleSheet(
+        f"font-size: 13px; color: {TEXT_PRIMARY}; background: transparent;"
+    )
     lbl.setMinimumWidth(240)
     row.addWidget(lbl)
     row.addWidget(widget)
@@ -77,7 +79,7 @@ def _field_row(label: str, widget: QWidget) -> QHBoxLayout:
 def _styled_combo(items: list[str]) -> QComboBox:
     cb = QComboBox()
     cb.addItems(items)
-    cb.setMinimumWidth(160)
+    cb.setMinimumWidth(220)
     cb.setStyleSheet(f"""
         QComboBox {{
             border: 1px solid {BORDER};
@@ -85,9 +87,16 @@ def _styled_combo(items: list[str]) -> QComboBox:
             padding: 4px 10px;
             font-size: 13px;
             color: {TEXT_PRIMARY};
-            background: {BG_PRIMARY};
+            background: #1c1e25;
         }}
-        QComboBox::drop-down {{ border: none; }}
+        QComboBox::drop-down {{ border: none; width: 20px; }}
+        QComboBox QAbstractItemView {{
+            background: #1c1e25;
+            color: {TEXT_PRIMARY};
+            border: 1px solid {BORDER};
+            selection-background-color: #0071E3;
+            selection-color: #FFFFFF;
+        }}
     """)
     return cb
 
@@ -104,15 +113,18 @@ def _styled_spin(min_val: int, max_val: int, step: int = 1) -> QSpinBox:
             padding: 4px 10px;
             font-size: 13px;
             color: {TEXT_PRIMARY};
-            background: {BG_PRIMARY};
+            background: #1c1e25;
         }}
+        QSpinBox::up-button, QSpinBox::down-button {{ width: 16px; border: none; }}
     """)
     return sp
 
 
 def _styled_check(label: str) -> QCheckBox:
     cb = QCheckBox(label)
-    cb.setStyleSheet(f"font-size: 13px; color: {TEXT_PRIMARY};")
+    cb.setStyleSheet(
+        f"font-size: 13px; color: {TEXT_PRIMARY}; background: transparent;"
+    )
     return cb
 
 
@@ -129,10 +141,6 @@ class ConfigPage(QWidget):
         self._build_ui()
         self._populate(config)
 
-    # ------------------------------------------------------------------
-    # Build
-    # ------------------------------------------------------------------
-
     def _build_ui(self) -> None:
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -141,17 +149,16 @@ class ConfigPage(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(f"background: {BG_SECONDARY};")
+        scroll.setStyleSheet("background: #111318; border: none;")
 
         container = QWidget()
-        container.setStyleSheet(f"background: {BG_SECONDARY};")
+        container.setStyleSheet("background: #111318;")
         self._content = QVBoxLayout(container)
         self._content.setContentsMargins(32, 32, 32, 32)
         self._content.setSpacing(16)
         self._content.setAlignment(Qt.AlignTop)
 
         self._build_model_card()
-        self._build_lifecycle_card()
         self._build_audio_card()
         self._build_injection_card()
         self._build_apply_row()
@@ -161,38 +168,13 @@ class ConfigPage(QWidget):
         outer.addWidget(scroll)
 
     def _build_model_card(self) -> None:
-        card, layout = _make_card("Modelo")
+        card, layout = _make_card("Modelo Groq")
 
-        self._cb_model = _styled_combo([
-            "tiny", "base", "small ★ recomendado", "medium", "large-v3-turbo",
-        ])
-        self._cb_compute = _styled_combo(["int8", "int8_float16", "float16"])
-        self._cb_device = _styled_combo(["auto", "cuda", "cpu"])
+        self._cb_model = _styled_combo(_GROQ_MODEL_LABELS)
         self._cb_language = _styled_combo(["auto", "pt", "en", "es", "fr", "de"])
 
         layout.addLayout(_field_row("Modelo", self._cb_model))
-        layout.addLayout(_field_row("Tipo de computação", self._cb_compute))
-        layout.addLayout(_field_row("Dispositivo", self._cb_device))
         layout.addLayout(_field_row("Idioma de transcrição", self._cb_language))
-
-        self._content.addWidget(card)
-
-    def _build_lifecycle_card(self) -> None:
-        card, layout = _make_card("Ciclo de vida")
-
-        self._chk_preload = _styled_check("Carregar modelo ao iniciar")
-        self._spin_unload = _styled_spin(0, 3600, 30)
-        self._spin_unload.setSuffix(" s")
-        self._spin_unload.setSpecialValueText("Nunca")
-        self._chk_load_during = _styled_check(
-            "Carregar modelo enquanto grava (recomendado)"
-        )
-
-        layout.addWidget(self._chk_preload)
-        layout.addLayout(
-            _field_row("Descarregar após inatividade", self._spin_unload)
-        )
-        layout.addWidget(self._chk_load_during)
 
         self._content.addWidget(card)
 
@@ -227,9 +209,7 @@ class ConfigPage(QWidget):
         row.addStretch()
 
         self._feedback_lbl = QLabel("")
-        self._feedback_lbl.setStyleSheet(
-            f"font-size: 13px; color: {ACCENT};"
-        )
+        self._feedback_lbl.setStyleSheet(f"font-size: 13px; color: {ACCENT};")
         row.addWidget(self._feedback_lbl)
 
         self._btn_apply = QPushButton("Aplicar")
@@ -246,54 +226,28 @@ class ConfigPage(QWidget):
                 font-weight: 500;
                 padding: 0 20px;
             }}
-            QPushButton:hover {{
-                background: #0077ED;
-            }}
-            QPushButton:pressed {{
-                background: #006CD1;
-            }}
+            QPushButton:hover {{ background: #0077ED; }}
+            QPushButton:pressed {{ background: #006CD1; }}
         """)
         self._btn_apply.clicked.connect(self._on_apply)
         row.addWidget(self._btn_apply)
 
         self._content.addLayout(row)
 
-    # ------------------------------------------------------------------
-    # Populate
-    # ------------------------------------------------------------------
-
     def _populate(self, config: FullConfig) -> None:
-        # Modelo
-        model_map = {
-            "tiny": 0, "base": 1, "small": 2, "medium": 3, "large-v3-turbo": 4,
-        }
-        self._cb_model.setCurrentIndex(model_map.get(config.model.name, 2))
-
-        compute_map = {"int8": 0, "int8_float16": 1, "float16": 2}
-        self._cb_compute.setCurrentIndex(
-            compute_map.get(config.model.compute_type, 1)
+        model_idx = (
+            _GROQ_MODEL_VALUES.index(config.model.groq_model)
+            if config.model.groq_model in _GROQ_MODEL_VALUES
+            else 0
         )
-
-        device_map = {"auto": 0, "cuda": 1, "cpu": 2}
-        self._cb_device.setCurrentIndex(
-            device_map.get(config.model.device, 0)
-        )
+        self._cb_model.setCurrentIndex(model_idx)
 
         lang_map = {"auto": 0, "pt": 1, "en": 2, "es": 3, "fr": 4, "de": 5}
-        self._cb_language.setCurrentIndex(
-            lang_map.get(config.model.language, 0)
-        )
+        self._cb_language.setCurrentIndex(lang_map.get(config.model.language, 0))
 
-        # Lifecycle
-        self._chk_preload.setChecked(config.lifecycle.preload_on_startup)
-        self._spin_unload.setValue(config.lifecycle.unload_after_idle_seconds)
-        self._chk_load_during.setChecked(config.lifecycle.load_during_recording)
-
-        # Áudio
         self._spin_min_dur.setValue(config.audio.min_duration_ms)
         self._spin_max_dur.setValue(config.audio.max_duration_seconds)
 
-        # Injeção
         strategy_idx = (
             _STRATEGY_VALUES.index(config.injection.strategy)
             if config.injection.strategy in _STRATEGY_VALUES
@@ -303,26 +257,13 @@ class ConfigPage(QWidget):
         self._chk_capitalize.setChecked(config.injection.capitalize_first)
         self._chk_trailing.setChecked(config.injection.add_trailing_space)
 
-    # ------------------------------------------------------------------
-    # Apply
-    # ------------------------------------------------------------------
-
     def _on_apply(self) -> None:
-        model_names = ["tiny", "base", "small", "medium", "large-v3-turbo"]
-        compute_values = ["int8", "int8_float16", "float16"]
-        device_values = ["auto", "cuda", "cpu"]
         lang_values = ["auto", "pt", "en", "es", "fr", "de"]
 
         new_cfg = self._config.model_copy(deep=True)
 
-        new_cfg.model.name = model_names[self._cb_model.currentIndex()]
-        new_cfg.model.compute_type = compute_values[self._cb_compute.currentIndex()]  # type: ignore[assignment]
-        new_cfg.model.device = device_values[self._cb_device.currentIndex()]  # type: ignore[assignment]
+        new_cfg.model.groq_model = _GROQ_MODEL_VALUES[self._cb_model.currentIndex()]
         new_cfg.model.language = lang_values[self._cb_language.currentIndex()]
-
-        new_cfg.lifecycle.preload_on_startup = self._chk_preload.isChecked()
-        new_cfg.lifecycle.unload_after_idle_seconds = self._spin_unload.value()
-        new_cfg.lifecycle.load_during_recording = self._chk_load_during.isChecked()
 
         new_cfg.audio.min_duration_ms = self._spin_min_dur.value()
         new_cfg.audio.max_duration_seconds = self._spin_max_dur.value()

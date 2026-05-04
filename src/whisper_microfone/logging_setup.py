@@ -49,15 +49,17 @@ def setup_logging(config: LoggingConfig | None = None) -> None:
         log_metrics = config.log_metrics
 
     # Console — apenas WARNING+ em produção para não poluir; DEBUG mostra tudo
-    console_level = level if level == "DEBUG" else "WARNING"
-    logger.add(
-        sys.stderr,
-        level=console_level,
-        format=_FORMAT_CONSOLE,
-        colorize=True,
-        backtrace=True,
-        diagnose=level == "DEBUG",
-    )
+    # sys.stderr é None em executáveis --noconsole do PyInstaller
+    if sys.stderr is not None:
+        console_level = level if level == "DEBUG" else "WARNING"
+        logger.add(
+            sys.stderr,
+            level=console_level,
+            format=_FORMAT_CONSOLE,
+            colorize=True,
+            backtrace=True,
+            diagnose=level == "DEBUG",
+        )
 
     # Arquivo rotativo em logs_dir()
     log_file = logs_dir() / "whisper-microfone.log"
